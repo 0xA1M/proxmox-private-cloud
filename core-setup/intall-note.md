@@ -92,7 +92,7 @@ reboot
 | Upload common ISOs            | UI: Datacenter → Storage → local → Content → Upload (Ubuntu, Debian, etc.)       | Ready for Phase 2 |
 | Install qemu-guest-agent on future VMs | Include in cloud-init or templates (later phases)                                 | Better metrics & shutdown |
 
-For DNS use bind9 and setup a name server, check Christian Lempa amazing [video](https://youtu.be/syzwLwE3Xq4?si=0IHukeEImLDQrHa6).
+For DNS use bind9 and setup a local name server, check Christian Lempa amazing [video](https://youtu.be/syzwLwE3Xq4?si=0IHukeEImLDQrHa6).
 
 ### 5. Verify Everything
 
