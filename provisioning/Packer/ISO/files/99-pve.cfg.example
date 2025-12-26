@@ -1,0 +1,4 @@
+# This configuration file ensures the QEMU Guest Agent is enabled
+# and that cloud-init performs a clean boot suitable for templates.
+# Copy it to 99-pve.cfg
+datasource_list = [NoCloud, ConfigDrive]

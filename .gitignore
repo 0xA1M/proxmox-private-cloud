@@ -1,0 +1,84 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tf
+.terraform/
+
+# Packer files
+*.packer.cache/
+*.ovf
+*.ovft
+*.vmdk
+*.iso
+*.vdi
+*.hdd
+*.qcow2
+*.qed
+*.vhd
+*.vhdx
+*.img
+*.bin
+*.dmg
+*.pkg
+
+# Packer variables
+provisioning/Packer/ISO/variables.pkr.hcl
+provisioning/Packer/Clone/variables.pkr.hcl
+
+# SSH keys and credentials
+*id_rsa*
+*id_dsa*
+*id_ecdsa*
+*id_ed25519*
+*.pem
+*.key
+
+# Environment specific
+.env
+*.env
+.local
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+*.lock
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Ansible
+ansible.log
+.retry
+
+# Secrets and configuration
+**/secrets/
+**/credentials/
+**/config.json
+**/config.yaml
+**/config.yml
+
+# Backup files
+*~
+*.bak
+*.backup
+
+# System files
+.fseventsd
+.SuperBoin
+.vol
+
+# Configuration files that might contain sensitive data
+*.cfg
+*.conf
+config/

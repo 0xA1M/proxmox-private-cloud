@@ -1,0 +1,16 @@
+### Example Packer variables file
+### Copy this file to `variables.pkr.hcl` and fill in your values
+
+### NOTE: You should NOT under any circumstance publish these variables to any public repo.
+
+# Your Proxmox IP Address
+proxmox_api_url="https://<PROXMOX IP>:8006/api2/json"
+
+# API Token ID
+proxmox_api_token_id="root@pve!packer"
+
+# API Token Secret
+proxmox_api_token_secret="your-secret-token"
+
+# Path to Your SSH Private Key
+ssh_private_key_file="/path/to/your/ssh/private/key"

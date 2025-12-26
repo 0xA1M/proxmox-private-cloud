@@ -1,0 +1,66 @@
+#cloud-config
+# This header is crucial for cloud-init to recognize the file as a valid cloud configuration.
+autoinstall:
+  version: 1 # It specifies the version of the autoinstall configuration format being used.
+  locale: en_US # Sets the system locale to US English.
+  keyboard: # Configures the keyboard to American layout.
+    layout: us
+  ssh: # Configuration for SSH during installation.
+    install-server: true # Installs the OpenSSH server for remote access.
+    allow-pw: false # Allows password authentication for SSH logins.
+    disable_root: false # Permits root login via SSH.
+    ssh_quiet_keygen: true # Suppresses output during SSH key generation for cleaner logs.
+    allow_public_ssh_keys: true # Allows the use of public SSH keys for authentication.
+  packages: # Packages to be installed during the setup process.
+    - qemu-guest-agent
+    # Essential for Packer to obtain VM IP and for Proxmox integration.
+    # It is used to exchange information between the host and guest, and to execute command in the guest.
+    - openssh-server # Installs the OpenSSH server.
+    - sudo # Ensures that the sudo package is installed for privilege escalation.
+    - curl # Command-line tool for transferring data with URLs.
+    - jq # Utility for processing JSON data; included as per Packer provisioner.
+    - vim # Text editor
+    - net-tools # Provides networking utilities like ifconfig and netstat.
+  storage:
+    layout:
+      name: direct # Indicates a direct disk layout for storage, meaning that we are going to use the entire disk without partitioning.
+    swap:
+      size: 0 # Configures the swap space to 0, meaning no swap will be created.
+
+  # This section configures the network settings for the VM.
+  # Ensure that the interface name in the configuration matches the actual network interface name inside the VM.
+  network:
+    version: 2 # Specifies the version of the network configuration.
+    ethernets:
+      all-en:
+        dhcp4: true # Enable DHCP for automatic IP assignment.
+        match:
+          name: en* # Dynamically matches any interface starting with 'en'.
+      all-eth:
+        dhcp4: true
+        match:
+          name: eth*
+
+  # Cloud-init User-Data (This block runs AFTER the initial installation)
+  user-data:
+    package_update: true # Enables automatic package updates during initial setup.
+    package_upgrade: true # Enable automatic package upgrades during the initial setup.
+    timezone: Europe/Amsterdam
+    # Sets the system timezone. Update this to your local timezone (e.g., America/New_York, Asia/Tokyo).
+    disable_root: false # If true, root login is disabled. If false, root login is allowed.
+    users: # Defines user accounts to create during installation.
+      - name: ubuntu # Creates a user named ubuntu.
+        groups: [adm, sudo, docker] # Adds the user to the adm and sudo groups, granting administrative privileges.
+        lock-passwd: false # Allows the user to log in with a password.
+        sudo: ALL=(ALL) NOPASSWD:ALL
+        # Grants the user passwordless sudo access to all commands, which is convenient (convenient for testing; security risk in production)
+        shell: /bin/bash # Sets the default shell for the user to Bash.
+        passwd: # "$6$VWMcjeJKvwNtvspj$pWyJ3uGz0.B4jvIL.hwiyhuLAEf831HnRwyXv6RMQ.aNSgQh49jwRrGqnHsObTh62i5TgNzkndfVpxhxoWOtP/" # Example for "ubuntu" password
+        # Contains the hashed password for the user, which should be kept secure.
+        # You need to provide a hashed password, use: openssl passwd -6
+        # Type in your password and it gives you a salted SHA-512 hash.
+        # Ensure this matches the password hash in the 'identity' section if you plan to use the same user.
+
+        # Add your SSH public key for key-based authentication (recommended for production).
+        ssh_authorized_keys:
+          # - "ssh-rsa AAAAB3NzaC1yc2E... user@example.com"  # Example format
