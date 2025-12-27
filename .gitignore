@@ -2,7 +2,6 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
-*.tf
 .terraform/
 
 # Packer files
@@ -81,4 +80,3 @@ ansible.log
 # Configuration files that might contain sensitive data
 *.cfg
 *.conf
-config/

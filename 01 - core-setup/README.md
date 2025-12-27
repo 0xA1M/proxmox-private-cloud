@@ -4,6 +4,8 @@ This document focuses on turning a fresh Proxmox VE 9.1 install into a **secure,
 
 > **Goal**: Harden the system, optimize performance, enable key security features, and prepare for automation in later phases.
 
+- Corresponding post: [How to Build a Local Private Cloud — Part I: Proxmox](https://medium.com/@0xA1M/how-to-build-a-local-private-cloud-part-i-proxmox-f118b146ebd8)
+
 ## Quick Installation Summary (Do This First)
 
 1. Download Proxmox VE 9.1 ISO from https://www.proxmox.com/en/downloads

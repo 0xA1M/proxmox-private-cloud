@@ -1,0 +1,27 @@
+#cloud-config
+hostname: "mc-vm-01"
+timezone: Europe/Amsterdam
+users:
+  - default
+  - name: ubuntu
+    groups:
+      - sudo
+      - docker
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ""
+    sudo: ALL=(ALL) NOPASSWD:ALL
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - openssh-server
+  - sudo
+  - curl
+  - jq
+  - vim
+  - net-tools
+runcmd:
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+  - echo "done" > /tmp/cloud-config.done

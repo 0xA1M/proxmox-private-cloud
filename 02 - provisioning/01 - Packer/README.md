@@ -2,6 +2,8 @@
 
 This directory contains Packer templates for creating VM images on Proxmox VE. The templates automate the process of creating standardized VM images that can be used for consistent deployments. The structure follows the Infrastructure as Code (IaC) principle to ensure reproducible and maintainable environments.
 
+- Corresponding post: [Phase II — Part 1: Automating VM Provisioning in Proxmox w/ Packer](https://medium.com/@0xA1M/phase-ii-part-1-automating-vm-provisioning-in-proxmox-w-packer-aafdd4231db2)
+
 ## Overview
 
 Packer is used to create VM templates that follow the Infrastructure as Code principle. These templates ensure that all VMs deployed in the environment have a consistent and reproducible configuration. The project uses two main approaches for VM creation:
