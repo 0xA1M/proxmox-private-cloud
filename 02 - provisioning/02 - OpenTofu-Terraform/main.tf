@@ -4,14 +4,14 @@ data "proxmox_virtual_environment_vms" "templates" {
   tags = ["template"]                # Filter VMs by the "template" tag to find template VMs created by Packer
 }
 
-# Optional TLS private key resource (commented out)
+# Optional TLS private key resource
 # In case you want to create a unique pair of SSH keys for this particular VM
 # resource "tls_private_key" "ubuntu_vm_key" {
 #   algorithm = "RSA"      # Specifies RSA algorithm for the key
 #   rsa_bits = 4096        # Key size in bits (4096 is more secure than default)
 # }
 
-# Optional local file data source for SSH key (commented out)
+# Optional local file data source for SSH key
 # In case you want to use your own public SSH key
 # data "local_file" "ssh_public_key" {
 #   filename = "~/.ssh/id.pub"  # Path to the SSH public key file
@@ -44,7 +44,7 @@ resource "proxmox_virtual_environment_vm" "minecraft_vm" {
     full = true  # Whether to perform a full clone (creates independent copy) or linked clone
   }
 
-  # count = 3 # Specify that we want 3 instances of said resource (minecraft_vm)
+  count = 2 # Specify that we want 2 instances of said resource (minecraft_vm)
 
   # Optional CPU configuration (commented out, using template defaults)
   # cpu {
@@ -52,7 +52,7 @@ resource "proxmox_virtual_environment_vm" "minecraft_vm" {
   #   architecture = "x86_64"  # CPU architecture (x86_64)
   # }
 
-  # Optional disk configuration (commented out, using template defaults)
+  # Optional disk configuration (using template defaults)
   # disk {
   #   aio = "io_uring"       # Asynchronous I/O mode (io_uring for better performance)
   #   file_format = "qcow2"  # Disk format (qcow2)
@@ -112,17 +112,20 @@ resource "proxmox_virtual_environment_vm" "minecraft_vm" {
   }
 }
 
-# Output to return the IP address of the deployed VM
-output "ubuntu_vm_ip" {
-  value = proxmox_virtual_environment_vm.minecraft_vm.ipv4_addresses[1][0]  # Gets the first IPv4 address from the second network interface (index 1)
+# Output to return the IP address of the deployed VMs
+output "ubuntu_vm_ips" {
+  value = [
+    for vm in proxmox_virtual_environment_vm.minecraft_vm :
+    vm.ipv4_addresses[1][0]
+  ]
 }
 
-# Optional output for SSH private key (commented out)
+# Optional output for SSH private key
 # output "ubuntu_vm_private_key" {
 #   value = tls_private_key.ubuntu_vm_key.private_key_openssh  # Returns the generated private key
 # }
 
-# Optional output for SSH public key (commented out)
+# Optional output for SSH public key 
 # output "ubuntu_vm_public_key" {
 #   value = tls_private_key.ubuntu_vm_key.public_key_openssh   # Returns the generated public key
 # }
