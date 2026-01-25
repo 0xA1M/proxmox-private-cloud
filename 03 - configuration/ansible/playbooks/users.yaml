@@ -1,0 +1,65 @@
+---
+# User and Sudo Configuration Playbook
+#
+# Global Purpose:
+# This playbook creates an administrative user account with sudo privileges and configures SSH
+# access for secure authentication.
+# The playbook runs on all hosts and includes error handling and conditionals for key retrieval.
+#
+# Target Hosts: all
+
+- name: User and sudo configuration
+  hosts: all
+  become: true
+
+  vars:
+    admin_user: deploy
+    admin_group: sudo
+
+  tasks:
+    - name: Ensure admin group exists
+      group:
+        name: "{{ admin_group }}" # Use the admin_group variable to define group name
+        state: present # Ensure the group exists (create if missing)
+
+    # Create the admin user with sudo privileges and appropriate group memberships
+    - name: Create admin user with sudo privileges
+      user:
+        name: "{{ admin_user }}" # Use admin_user variable for username
+        shell: /bin/bash # Set default shell to bash
+        groups: "{{ admin_group }}" # Assign user to sudo group
+        append: true # Append to existing groups (don't overwrite)
+        create_home: true # Create home directory if it doesn't exist
+        state: present # Ensure user exists
+
+    # Create the .ssh directory for secure key-based authentication
+    - name: Ensure admin user .ssh directory exists
+      file:
+        path: "/home/{{ admin_user }}/.ssh"
+        state: directory
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0700"
+
+    # Add SSH public key from default location to admin user's authorized_keys
+    - name: Add SSH public key for admin user
+      authorized_key:
+        user: "{{ admin_user }}"
+        key: "{{ lookup('file', '~/.ssh/id.pub') }}"
+      when: lookup('env', 'USER') != 'root' and (lookup('file', '~/.ssh/id.pub', errors='warn') is defined)
+      # Conditional execution: only run if current user is not root AND SSH key file exists
+
+    # Alternative approach: Add SSH key from variable if provided via ansible-playbook -e option
+    - name: Add SSH key from variable if provided
+      authorized_key:
+        user: "{{ admin_user }}"
+        key: "{{ ssh_public_key | default(omit) }}"
+      when: ssh_public_key is defined
+
+  handlers:
+    # Handler to restart SSH service when configuration changes are made
+    # This ensures new settings take effect
+    - name: Restart SSH
+      service:
+        name: ssh # Name of the SSH service
+        state: restarted # Restart the service to apply changes

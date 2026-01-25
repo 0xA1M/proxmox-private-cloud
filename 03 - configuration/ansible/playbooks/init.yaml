@@ -1,0 +1,73 @@
+---
+# Initial System Setup and Package Management Playbook
+#
+# Global Purpose:
+# This playbook performs fundamental system setup on all target hosts. It updates the system,
+# installs essential packages, and configures basic system settings like timezone and locale.
+# It's designed to run on all hosts and includes error handling with retries for APT operations
+# and automatic system restarts when necessary.
+#
+# Target Hosts: all
+
+- name: Initial System Setup and Package Management
+  hosts: all
+  become: true # Enable privilege escalation to run commands as root
+  gather_facts: true # Gather system facts for conditional tasks
+
+  vars:
+    base_packages:
+      - ufw
+      - htop
+      - vim
+      - curl
+      - wget
+      - git
+      - ca-certificates
+      - gnupg
+      - lsb-release
+      - rsync
+      - fail2ban
+
+  tasks:
+    - name: Update APT package cache and perform full system upgrade (Debian based systems)
+      apt:
+        update_cache: yes # Update package cache before upgrading
+        upgrade: full # Perform full system upgrade
+        autoremove: yes # Remove unnecessary packages
+        autoclean: yes # Clean package cache
+      register: apt_result # Store result for conditional notifications
+      retries: 3 # Retry up to 3 times if fails
+      delay: 5 # Wait 5 seconds between retries
+      until: apt_result is succeeded # Repeat until successful
+      notify: Restart system if needed # Trigger handler if system restart needed
+      when: ansible_os_family == "Debian" # Only run on Debian-based systems
+
+    - name: Install essential base packages
+      apt:
+        name: "{{ base_packages }}" # Install packages from the base_packages variable
+        state: present # Ensure packages are present (install if missing)
+        update_cache: yes # Update package cache before installing
+      register: install_result # Store result for retry mechanism
+      retries: 3 # Retry up to 3 times if installation fails
+      delay: 5 # Wait 5 seconds between retries
+      until: install_result is succeeded # Repeat until successful
+      when: ansible_os_family == "Debian" # Only run on Debian-based systems
+
+    # Set system timezone to UTC for consistency across all servers
+    - name: Set system timezone to UTC
+      timezone:
+        name: UTC
+
+    # Configure system locale to en_US.UTF-8
+    - name: Configure system locale to en_US.UTF-8
+      locale_gen:
+        name: en_US.UTF-8
+        state: present # Ensure locale is generated and available
+
+  handlers:
+    # Handler to restart system when kernel updates require it
+    # Only triggered when notified by tasks that require restart
+    - name: Restart system if needed
+      reboot:
+        reboot_timeout: 300 # Wait up to 5 minutes for reboot completion
+      listen: "system updated" # Listen for notifications from tasks

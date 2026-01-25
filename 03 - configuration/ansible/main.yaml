@@ -1,0 +1,26 @@
+---
+# Main Ansible Playbook Orchestrator
+#
+# Global Purpose:
+# This file serves as the main orchestrator that imports and runs all the individual playbooks
+# in a specific sequence. It defines the complete configuration workflow for new VMs by
+# sequentially executing the init, users, security, and minecraft playbooks. This
+# provides a complete, consistent environment setup across all provisioned VMs.
+#
+# Execution Order:
+# 1. init.yaml - Basic system setup
+# 2. users.yaml - User management
+# 3. security.yaml - Security hardening
+# 4. minecraft.yaml - Minecraft server deployment
+
+# Import and execute the init.yaml playbook for initial system setup
+- import_playbook: playbooks/init.yaml
+
+# Import and execute the users.yaml playbook for user and SSH configuration
+- import_playbook: playbooks/users.yaml
+
+# Import and execute the security.yaml playbook for security hardening
+- import_playbook: playbooks/security.yaml
+
+# Import and execute the minecraft.yaml playbook for Minecraft server deployment
+- import_playbook: playbooks/minecraft.yaml

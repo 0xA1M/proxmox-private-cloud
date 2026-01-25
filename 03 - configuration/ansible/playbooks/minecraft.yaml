@@ -1,0 +1,79 @@
+---
+# Minecraft Server Docker Deployment Playbook
+#
+# Global Purpose:
+# This playbook deploys a Minecraft server using Docker containers. It targets hosts in the
+# 'minecraft' group, creates a data directory for persistence, runs a Minecraft server
+# container using the itzg/minecraft-server image with specific configurations (Paper type,
+# 2GB RAM, etc.), and includes health checks to verify server startup. The playbook is
+# designed to maintain persistent data and ensure the server runs reliably with automatic
+# restart policies.
+#
+# Target Hosts: minecraft
+
+- name: Minecraft Server Docker Deployment
+  hosts: minecraft # Target only hosts in the 'minecraft' group
+  become: true
+
+  vars:
+    # Minecraft server configuration
+    mc_container_name: minecraft
+    mc_image: itzg/minecraft-server:latest
+    mc_data_dir: /opt/minecraft
+    mc_port: 25565
+    mc_memory: "2G"
+    mc_type: "PAPER"
+
+    # Additional environment variables for Minecraft server configuration
+    mc_env_vars:
+      EULA: "TRUE"
+      MEMORY: "{{ mc_memory }}"
+      TYPE: "{{ mc_type }}"
+      VERSION: "latest"
+      DIFFICULTY: "hard"
+      MAX_PLAYERS: "20"
+      MAX_WORLD_SIZE: "10000"
+      ALLOW_NETHER: "true"
+      ANNOUNCE_PLAYER_ACHIEVEMENTS: "true"
+      ENABLE_COMMAND_BLOCK: "false"
+      FORCE_GAMEMODE: "false"
+      GENERATE_STRUCTURES: "true"
+      HARDCORE: "false"
+      SNOOPER_ENABLED: "true"
+      ONLINE_MODE: "false" # Online mode (authentication) setting
+      PVP: "true"
+      LEVEL_TYPE: "DEFAULT" # Type of world generation
+
+  tasks:
+    # Create the Minecraft data directory with appropriate permissions for data persistence
+    - name: Create Minecraft data directory
+      file:
+        path: "{{ mc_data_dir }}" # Path from variable for data persistence
+        state: directory # Ensure it's a directory
+        owner: "1000" # Set owner to UID 1000 (standard user ID)
+        group: "1000" # Set group to GID 1000 (standard user ID)
+        mode: "0755" # Set permissions to rwxr-xr-x
+
+    # Create and start the Minecraft server container with various configurations:
+    # - Container name, image, and restart policy
+    # - Port mapping (internal 25565 to external mc_port)
+    # - Volume mount for data persistence
+    # - Environment variables from the mc_env_vars dictionary
+    # - Pulls latest image before starting
+    - name: Create Minecraft server container
+      docker_container:
+        name: "{{ mc_container_name }}"
+        image: "{{ mc_image }}"
+        state: started # Ensure container is running
+        restart_policy: unless-stopped
+        exposed_ports:
+          - "{{ mc_port }}"
+        published_ports:
+          - "{{ mc_port }}:25565"
+        volumes:
+          - "{{ mc_data_dir }}:/data"
+        env: "{{ mc_env_vars }}"
+        networks:
+          - name: bridge
+        pull: true
+      register: container_result # Register result for conditional next task

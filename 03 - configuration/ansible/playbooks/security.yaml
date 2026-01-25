@@ -1,0 +1,131 @@
+---
+# Enhanced Security Hardening Playbook
+#
+# Global Purpose:
+# This playbook implements comprehensive security hardening measures. It consists of two main sections:
+# SSH hardening and firewall configuration. The SSH section disables root login, disables password
+# authentication, and configures fail2ban for protection against brute force attacks. The firewall
+# section sets up UFW (Uncomplicated Firewall) with a default deny policy and selectively opens
+# necessary ports based on server roles.
+#
+# Target Hosts: all
+
+# First playbook section: SSH and fail2ban hardening
+- name: Enhanced security hardening
+  hosts: all
+  become: true
+  vars:
+    # SSH configuration parameters
+    ssh_port: 22
+    ssh_login_grace_time: 60 # Time allowed for login (seconds)
+    # fail2ban configuration parameters
+    fail2ban_ssh_maxretry: 5 # Max login attempts before ban
+    fail2ban_ssh_bantime: 3600 # Ban duration in seconds (1 hour)
+    fail2ban_ssh_findtime: 600 # Time window in which to count failures (10 minutes)
+
+  tasks:
+    # Ensure the SSH configuration directory exists with proper permissions
+    - name: Ensure SSH configuration directory exists
+      file:
+        path: /etc/ssh
+        state: directory
+        mode: "0755" # Set permissions to rwxr-xr-x
+
+    - name: Set SSH configuration parameters
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}" # Regular expression to match existing lines
+        line: "{{ item.line }}" # Line to insert or replace
+        backup: yes # Create a backup of the original file
+      loop: # Loop through configuration options
+        - { regexp: "^PermitRootLogin ", line: "PermitRootLogin no" } # Disable root login
+        - { regexp: "^MaxAuthTries ", line: "MaxAuthTries 3" } # Limit auth attempts
+        - { regexp: "^MaxSessions ", line: "MaxSessions 10" } # Limit concurrent sessions
+        - { regexp: "^PubkeyAuthentication ", line: "PubkeyAuthentication yes" } # Enable pubkey auth
+        - {
+            regexp: "^PasswordAuthentication ",
+            line: "PasswordAuthentication no",
+          } # Disable password auth
+      notify: Restart SSH # Restart SSH service when changes are made
+
+    - name: Configure fail2ban for SSH
+      copy:
+        dest: /etc/fail2ban/jail.local
+        content: | # Content to write to the file
+          [sshd]
+          enabled = true                 # Enable the SSHD jail
+          port = {{ ssh_port }}          # SSH port to monitor (from variable)
+          filter = sshd                  # Use the SSHD filter
+          logpath = /var/log/auth.log    # Log file to monitor for failed attempts
+          maxretry = {{ fail2ban_ssh_maxretry }}  # Max retries before ban (from variable)
+          bantime = {{ fail2ban_ssh_bantime }}    # Ban duration (from variable)
+          findtime = {{ fail2ban_ssh_findtime }}  # Time window for counting failures (from variable)
+        backup: yes
+      notify: Restart fail2ban # Restart fail2ban service when changes are made
+
+    # Enable and start the fail2ban service to begin protecting SSH
+    - name: Enable and start fail2ban service
+      service:
+        name: fail2ban
+        state: started # Start the service
+        enabled: yes # Enable service to start at boot
+
+  # Handlers section to restart SSH and fail2ban services when configuration changes are made
+  handlers:
+    - name: Restart SSH
+      service:
+        name: ssh
+        state: restarted
+
+    - name: Restart fail2ban
+      service:
+        name: fail2ban
+        state: restarted
+
+# Second playbook section: Firewall configuration
+- name: Firewall configuration
+  hosts: all
+  become: true
+
+  tasks:
+    # Configure UFW with a default deny policy for enhanced security
+    - name: Configure UFW default policies
+      ufw:
+        state: enabled # Enable the UFW firewall
+        policy: deny # Set default policy to deny all traffic
+
+    # Allow SSH traffic through the firewall on TCP port
+    - name: Allow SSH through UFW
+      ufw:
+        rule: allow
+        port: "ssh"
+        proto: "tcp"
+
+    # Allow Minecraft server port (25565) only on hosts that belong to the 'minecraft' group
+    - name: Allow Minecraft server port for Minecraft servers
+      ufw:
+        rule: allow
+        port: 25565
+        proto: tcp
+      when: "'minecraft' in group_names" # Only run on hosts in the 'minecraft' group
+
+    # Allow HTTP and HTTPS traffic only on hosts that belong to the 'web' group
+    - name: Allow HTTP and HTTPS traffic on web servers
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+        proto: tcp
+      loop:
+        - "80"
+        - "443"
+      when: "'web' in group_names" # Only run on hosts in the 'web' group
+
+    # Enable UFW logging for monitoring purposes
+    - name: Configure UFW logging
+      ufw:
+        logging: "on"
+
+    # Reload UFW to apply all configuration changes
+    - name: Reload UFW to apply changes
+      ufw:
+        state: reloaded
