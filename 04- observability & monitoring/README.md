@@ -21,40 +21,7 @@ The stack is split into two parts:
 
 ## Architecture
 
-```
-                          Monitoring VM (Docker Compose)
-  ┌──────────────────────────────────────────────────────────────┐
-  │  ┌──────────┐   ┌─────────┐   ┌──────────┐                 │
-  │  │Prometheus│   │  Loki   │   │ Grafana  │  PVE Exporter   │
-  │  │  :9090   │   │ :3100   │   │  :3000   │  :9221          │
-  │  └────┬─────┘   └───┬─────┘   └──────────┘  └──────┬───────┘
-  │       │              │                               │
-  │  ┌────▼──────────────▼───────────────────────────────▼────┐
-  │  │         Alertmanager + alertmanager-discord            │
-  │  │   (internal Docker network, no host ports exposed)     │
-  │  └────────────────────────────────────────────────────────┘
-  └──────────────────────────────────────────────────────────────┘
-           ▲                          ▲
-           │ Push metrics via         │ Push logs via
-           │ remote_write             │ HTTP to Loki API
-           │                          │
-           │         +                │
-           │ Scrape via file_sd       │
-           │ (health check)           │
-           │                          │
-  ┌──────────────────────────────────────────────────────────────┐
-  │    Target VM (Alloy, privileged Docker container)            │
-  │                                                              │
-  │  ┌──────────────────────────────────────────────────────┐    │
-  │  │  prometheus.exporter.unix "local"   → node metrics   │    │
-  │  │  prometheus.exporter.cadvisor       → container met. │    │
-  │  │  loki.source.docker "docker_logs"   → Docker logs    │    │
-  │  │  loki.source.file "logs"            → syslog         │    │
-  │  │  prometheus.remote_write            → Prometheus     │    │
-  │  │  loki.write                         → Loki           │    │
-  │  └──────────────────────────────────────────────────────┘    │
-  └──────────────────────────────────────────────────────────────┘
-```
+![Observability Architecture](../.assets/Observation_Architecture.svg)
 
 ### Data Flow
 
