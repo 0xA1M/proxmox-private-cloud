@@ -1,0 +1,24 @@
+---
+- name: Unregister VM from monitoring stack
+  hosts: vms
+  become: true
+  tasks:
+    - name: Stop and remove alloy container
+      docker_container:
+        name: alloy
+        state: absent
+    - name: Remove alloy config
+      file:
+        path: /etc/alloy
+        state: absent
+    - name: Remove alloy image
+      docker_image:
+        name: "grafana/alloy:latest"
+        state: absent
+
+    - name: Remove target from Prometheus file_sd on monitoring VM
+      delegate_to: monitoring-vm
+      become: true
+      file:
+        path: "/opt/monitoring/configs/prometheus/targets/alloy-{{ inventory_hostname }}.yml"
+        state: absent

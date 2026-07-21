@@ -1,0 +1,44 @@
+# Authentication disabled — internal network only
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+# Common configuration shared across all Loki components
+# Single-binary mode: all components run in one process
+common:
+  ring:
+    instance_addr: 127.0.0.1      # Ring communication on localhost (single instance)
+    kvstore:
+      store: inmemory             # No external key-value store needed
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks   # Log chunk storage
+      rules_directory: /loki/rules     # Recording/alerting rules
+  replication_factor: 1               # Single instance, no replication
+
+# Index schema — TSDB (newer, more performant than boltdb-shipper)
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+# Compactor — merges and deduplicates TSDB index files
+compactor:
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+# Per-tenant limits
+limits_config:
+  # Disable sample age check — without this, old log entries from
+  # Alloy WAL replays after restart get dropped as "too far behind"
+  reject_old_samples: false
+  # Retain logs for 30 days (720 hours)
+  retention_period: 720h

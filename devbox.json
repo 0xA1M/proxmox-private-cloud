@@ -14,7 +14,7 @@
     "scripts": {
       "help": [
         "echo 'Available commands:'",
-        "echo '  ansible:setup-monitoring  Deploy monitoring stack on 10.0.0.50'",
+        "echo '  ansible:setup-monitoring  Deploy monitoring stack (limit with -l IP)'",
         "echo '  ansible:register-vm       Register a VM with alloy (limit with -l IP)'",
         "echo '  ansible:unregister-vm     Remove alloy from a VM (limit with -l IP)'",
         "echo '  packer:build-clone        Build VM from existing template'",
@@ -23,13 +23,13 @@
         "echo '  tofu:apply                Apply infrastructure changes'"
       ],
       "ansible:setup-monitoring": [
-        "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l 10.0.0.50 \"04- observability & monitoring/ansible/playbooks/setup-monitoring-vm.yaml\""
+        "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l CHANGEME_MONITORING_VM_IP \"04- observability & monitoring/ansible/playbooks/setup-monitoring-vm.yaml\""
       ],
       "ansible:register-vm": [
-        "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l 10.0.0.115 \"04- observability & monitoring/ansible/playbooks/register-vm.yaml\""
+        "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l CHANGEME_TARGET_VM_IP \"04- observability & monitoring/ansible/playbooks/register-vm.yaml\""
       ],
       "ansible:unregister-vm": [
-        "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l 10.0.0.115 \"04- observability & monitoring/ansible/playbooks/unregister-vm.yaml\""
+        "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l CHANGEME_TARGET_VM_IP \"04- observability & monitoring/ansible/playbooks/unregister-vm.yaml\""
       ],
       "packer:build-clone": [
         "cd \"02 - provisioning/01 - Packer/Clone\" && packer init . && packer build ."

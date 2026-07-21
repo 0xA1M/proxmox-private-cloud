@@ -1,0 +1,28 @@
+#cloud-config
+# Replace the hostname and timezone with your own values
+hostname: "CHANGEME_MONITORING_HOSTNAME"
+timezone: CHANGEME_TIMEZONE  # e.g. Europe/Amsterdam, America/New_York, UTC
+users:
+  - default
+  - name: ubuntu
+    groups:
+      - sudo
+      - docker
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ""  # Add your SSH public key here
+    sudo: ALL=(ALL) NOPASSWD:ALL
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - openssh-server
+  - sudo
+  - curl
+  - jq
+  - vim
+  - net-tools
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - systemctl enable --now ssh
+  - echo "done" > /tmp/cloud-config.done

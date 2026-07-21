@@ -1,0 +1,30 @@
+---
+- name: Register VM with monitoring stack
+  hosts: vms
+  become: true
+  roles:
+    - grafana_alloy
+
+  tasks:
+    - name: Register target in Prometheus file_sd on monitoring VM
+      delegate_to: monitoring-vm
+      become: true
+      vars:
+        monitoring_targets_dir: /opt/monitoring/configs/prometheus/targets
+        target_file: "{{ monitoring_targets_dir }}/alloy-{{ inventory_hostname }}.yml"
+        target_ip: "{{ hostvars[inventory_hostname]['ansible_host'] | default(inventory_hostname) }}"
+      block:
+        - name: Ensure targets directory exists
+          ansible.builtin.file:
+            path: "{{ monitoring_targets_dir }}"
+            state: directory
+            mode: '0755'
+
+        - name: Write alloy target file
+          ansible.builtin.copy:
+            dest: "{{ target_file }}"
+                content: |
+                  - targets: ["{{ target_ip }}:12345"]
+                    labels:
+                      __meta_hostname: "{{ hostvars[inventory_hostname]['ansible_facts']['hostname'] | default(inventory_hostname) }}"
+            mode: '0644'

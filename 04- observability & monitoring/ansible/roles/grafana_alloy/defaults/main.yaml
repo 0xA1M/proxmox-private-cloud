@@ -1,0 +1,6 @@
+---
+# Replace CHANGEME_MONITORING_VM_IP with the IP of your monitoring VM
+monitoring_host: "CHANGEME_MONITORING_VM_IP"
+prometheus_remote_write_url: "http://{{ monitoring_host }}:9090/api/v1/write"
+loki_push_url: "http://{{ monitoring_host }}:3100/loki/api/v1/push"
+alloy_image: "grafana/alloy:latest"

@@ -1,0 +1,54 @@
+# Global settings apply to all scrape jobs unless overridden
+global:
+  scrape_interval: 15s         # How often to scrape targets
+  evaluation_interval: 15s     # How often to evaluate alert rules
+
+# Alertmanager configuration — Prometheus pushes firing alerts here
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]  # Docker service name, internal network
+
+# Alert rules — evaluated against all scraped metrics
+rule_files:
+  - "/etc/prometheus/alert.rules.yml"
+
+# Scrape jobs define what Prometheus pulls metrics from
+scrape_configs:
+  # Self-monitoring — Prometheus scrapes itself
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # Proxmox VE metrics via PVE-exporter
+  # PVE-exporter translates Proxmox API responses into Prometheus metrics
+  # Replace CHANGEME_PROXMOX_HOST_IP with your Proxmox node's IP
+  - job_name: pve
+    scrape_interval: 30s        # PVE API is slower, no need for 15s
+    scrape_timeout: 30s         # PVE API can be slow under load
+    metrics_path: /pve          # PVE-exporter serves metrics at /pve
+    params:
+      module: [default]         # Which config module from pve.yml to use
+      target: ["CHANGEME_PROXMOX_HOST_IP"]  # Proxmox node IP
+    static_configs:
+      - targets: ["pve-exporter:9221"]  # Docker service name
+    relabel_configs:
+      # Override instance label to show Proxmox host IP, not the exporter container
+      - target_label: instance
+        replacement: CHANGEME_PROXMOX_HOST_IP
+
+  # Alloy agents — scraped directly for health monitoring (up == 0 alerts)
+  # Targets are auto-registered by register-vm playbook into targets/alloy-*.yml
+  - job_name: alloy
+    scrape_interval: 15s
+    file_sd_configs:
+      - files:
+          - "/etc/prometheus/targets/alloy-*.yml"
+    # Keep IP as instance (unique identifier), add hostname as separate label
+    relabel_configs:
+      - source_labels: ["__address__"]
+        target_label: "instance"
+        regex: "(.*):.*"
+        replacement: "$1"
+      - source_labels: ["__meta_hostname"]
+        target_label: "hostname"

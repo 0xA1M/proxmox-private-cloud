@@ -1,0 +1,21 @@
+# Grafana datasource provisioning
+# These datasources are created automatically on Grafana startup
+# Any existing datasources with the same names are deleted first
+
+apiVersion: 1
+
+deleteDatasources:
+  - name: Prometheus     # Remove existing Prometheus datasource before re-creating
+  - name: Loki           # Remove existing Loki datasource before re-creating
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy        # Grafana proxies requests to the datasource (browser doesn't connect directly)
+    url: http://prometheus:9090   # Docker service name, internal network
+    isDefault: true      # Used as default datasource in new panels
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100         # Docker service name, internal network

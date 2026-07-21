@@ -1,0 +1,108 @@
+---
+# Provisions the monitoring VM with the full observability stack
+# Targets the [monitoring] group in inventory (update inventory.ini with your VM IP)
+# Installs Docker if needed, deploys docker-compose.yml + configs, starts all services
+- name: Provision monitoring VM (Prometheus, Loki, Grafana, Alertmanager, PVE exporter)
+  hosts: monitoring
+  become: true
+  vars:
+    monitoring_dir: /opt/monitoring                    # Directory on the target VM
+    observability_root: "{{ playbook_dir }}/../.."     # Repo root relative to playbook
+
+  tasks:
+    # Check if Docker is already installed — skip install block if it is
+    - name: Check if docker is installed
+      ansible.builtin.command: docker --version
+      register: docker_check
+      ignore_errors: true
+      changed_when: false
+
+    # Install Docker using the official get.docker.com script
+    - name: Install Docker if missing
+      block:
+        - name: Download Docker install script
+          ansible.builtin.get_url:
+            url: https://get.docker.com
+            dest: /tmp/get-docker.sh
+            mode: '0755'
+        - name: Run Docker install script
+          ansible.builtin.command: /tmp/get-docker.sh
+          args:
+            creates: /usr/bin/docker
+        - name: Add user to docker group
+          ansible.builtin.user:
+            name: "{{ ansible_user }}"
+            groups: docker
+            append: true
+      when: docker_check.failed
+
+    # Create the directory that will hold all monitoring files
+    - name: Ensure monitoring directory exists
+      ansible.builtin.file:
+        path: "{{ monitoring_dir }}"
+        state: directory
+        mode: '0755'
+
+    # Copy docker-compose.yml which defines all monitoring services
+    - name: Copy docker-compose.yml
+      ansible.builtin.copy:
+        src: "{{ observability_root }}/docker-compose.yml"
+        dest: "{{ monitoring_dir }}/docker-compose.yml"
+        mode: '0644'
+
+    # Template the .env file from Ansible Vault secrets (discord webhook, grafana password)
+    - name: Template .env from vault
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/.env.j2"
+        dest: "{{ monitoring_dir }}/.env"
+        mode: '0600'
+      no_log: true  # Prevent secret values from appearing in logs
+
+    # Copy all config files (prometheus, loki, grafana, alertmanager, alloy, pve-exporter)
+    - name: Copy configs directory
+      ansible.builtin.copy:
+        src: "{{ observability_root }}/configs/"
+        dest: "{{ monitoring_dir }}/configs/"
+        mode: '0644'
+
+    # Replace CHANGEME_PROXMOX_HOST_IP with the actual Proxmox host IP
+    # Set proxmox_host_ip in group_vars/monitoring/vars.yml, inventory, or via -e
+    - name: Substitute Proxmox host IP in prometheus.yml
+      ansible.builtin.replace:
+        path: "{{ monitoring_dir }}/configs/prometheus/prometheus.yml"
+        regexp: 'CHANGEME_PROXMOX_HOST_IP'
+        replace: '{{ proxmox_host_ip }}'
+
+    # Deploy monitoring stack with docker compose
+    # pull: always ensures latest images are fetched
+    # remove_orphans: true cleans up any stale containers not in the compose file
+    - name: Deploy monitoring stack with docker compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ monitoring_dir }}"
+        state: present
+        pull: always
+        remove_orphans: true
+
+    # Grafana must be restarted after configs are deployed so it picks up
+    # newly provisioned dashboards (Grafana only reads provisioning files at startup)
+    - name: Restart Grafana to pick up provisioned dashboards
+      community.docker.docker_container:
+        name: grafana
+        state: started
+        restart: true
+
+    # Show running containers for verification
+    - name: Show running containers
+      ansible.builtin.command: docker ps --format '{{ "{{.Names}}" }} {{ "{{.Status}}" }}'
+      register: ps
+      changed_when: false
+    - ansible.builtin.debug:
+        msg: "{{ ps.stdout_lines }}"
+
+    # Print Grafana login URL and credentials (password from vault)
+    - name: Show Grafana credentials
+      ansible.builtin.debug:
+        msg:
+          - "Grafana: http://{{ ansible_host }}:3000"
+          - "User: admin"
+          - "Password: {{ gf_security_admin_password }}"

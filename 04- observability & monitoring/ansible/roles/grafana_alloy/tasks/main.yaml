@@ -1,0 +1,68 @@
+---
+- name: Check if docker is installed
+  command: docker --version
+  register: docker_check
+  ignore_errors: true
+  changed_when: no
+
+- name: Install Docker if missing
+  block:
+    - name: Download Docker install script
+      get_url:
+        url: https://get.docker.com
+        dest: /tmp/get-docker.sh
+        mode: 0755
+
+    - name: Run Docker install script
+      command: /tmp/get-docker.sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+  when: docker_check.failed
+
+- name: Ensure /etc/alloy exists
+  file:
+    path: /etc/alloy
+    state: directory
+
+- name: Deploy alloy config
+  template:
+    src: config.alloy.j2
+    dest: /etc/alloy/config.alloy
+  notify: restart alloy
+
+- name: Pull alloy image
+  docker_image:
+    name: "{{ alloy_image }}"
+    source: pull
+
+- name: Run alloy container
+  docker_container:
+    name: alloy
+    image: "{{ alloy_image }}"
+    hostname: "{{ ansible_facts[\"hostname\"] }}"
+    restart_policy: always
+    state: started
+    volumes:
+      - "/etc/alloy:/etc/alloy:ro"
+      - "/var/log:/var/log:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/proc:/host/proc:ro"
+      - "/sys:/host/sys:ro"
+      - "/sys/fs/cgroup:/sys/fs/cgroup:ro"
+      - "/var/lib/docker/:/var/lib/docker:ro"   
+      - "/:/rootfs:ro"                          
+      - "/var/run:/var/run:rw"                   
+      - "/dev/disk/:/dev/disk:ro"
+    privileged: true
+    ports:
+      - "12345:12345"
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "/etc/alloy/config.alloy"

@@ -1,0 +1,6 @@
+---
+- name: restart alloy
+  docker_container:
+    name: alloy
+    state: started
+    restart: true

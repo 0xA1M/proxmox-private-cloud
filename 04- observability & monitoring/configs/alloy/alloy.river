@@ -1,0 +1,104 @@
+// Node-level exporter — CPU, memory, disk, network, processes
+// Reads from /host/proc and /host/sys (mounted from the host)
+prometheus.exporter.unix "local" {
+  include_exporter_metrics = true
+  procfs_path = "/host/proc"
+  sysfs_path  = "/host/sys"
+}
+
+// Container-level exporter — per-container CPU, memory, network, filesystem
+// Reads from the Docker socket to discover and query cAdvisor stats
+prometheus.exporter.cadvisor "docker" {
+  docker_host            = "unix:///var/run/docker.sock"
+  docker_only            = true
+  store_container_labels = true
+}
+
+// Relabel cAdvisor targets: copy `name` → `container`, set `instance` to hostname
+// Note: cAdvisor emits `name` as a metric label, this adds `container` as a target label
+discovery.relabel "cadvisor" {
+  targets = prometheus.exporter.cadvisor.docker.targets
+  rule {
+    source_labels = ["name"]
+    target_label  = "container"
+  }
+  rule {
+    target_label = "instance"
+    replacement  = constants.hostname
+  }
+}
+
+// Discover running Docker containers for log collection
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Relabel Docker discovery meta labels into usable log labels
+// __meta_docker_container_name → container (stripping leading /)
+// __meta_docker_container_id  → container_id
+discovery.relabel "docker_containers" {
+  targets = []
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    target_label  = "container"
+    regex         = "^/(.+)$"
+    replacement   = "$1"
+  }
+  rule {
+    source_labels = ["__meta_docker_container_id"]
+    target_label  = "container_id"
+  }
+}
+
+// Collect Docker container logs via the Docker API
+loki.source.docker "docker_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.containers.targets
+  forward_to = [loki.write.monitoring.receiver]
+  labels = {
+    service_name = constants.hostname,
+  }
+  relabel_rules = discovery.relabel.docker_containers.rules
+}
+
+// Scrape all exporters and forward to remote write
+// Combines node exporter targets + cAdvisor targets (with relabel applied)
+prometheus.scrape "default" {
+  targets    = concat(
+    prometheus.exporter.unix.local.targets,
+    prometheus.exporter.cadvisor.docker.targets,
+  )
+  forward_to = [prometheus.remote_write.monitoring.receiver]
+  scrape_interval = "15s"
+}
+
+// Collect syslog and general log files
+loki.source.file "logs" {
+  forward_to = [loki.write.monitoring.receiver]
+  targets = [
+    {
+      __path__     = "/var/log/**log",
+      service_name = constants.hostname,
+    },
+    {
+      __path__     = "/var/log/syslog",
+      service_name = constants.hostname,
+    },
+  ]
+}
+
+// Send logs to Loki on the monitoring VM
+// Replace CHANGEME_MONITORING_VM_IP with your monitoring VM's IP
+loki.write "monitoring" {
+  endpoint {
+    url = "http://CHANGEME_MONITORING_VM_IP:3100/loki/api/v1/push"
+  }
+}
+
+// Send metrics to Prometheus on the monitoring VM
+// Replace CHANGEME_MONITORING_VM_IP with your monitoring VM's IP
+prometheus.remote_write "monitoring" {
+  endpoint {
+    url = "http://CHANGEME_MONITORING_VM_IP:9090/api/v1/write"
+  }
+}

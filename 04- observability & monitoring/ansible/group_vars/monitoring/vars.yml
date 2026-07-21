@@ -1,0 +1,3 @@
+---
+# Proxmox host IP for PVE Exporter — replace with your Proxmox node's LAN IP
+proxmox_host_ip: "CHANGEME_PROXMOX_HOST_IP"

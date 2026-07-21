@@ -1,0 +1,20 @@
+groups:
+  - name: instance_down
+    rules:
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ if $labels.hostname }}{{ $labels.hostname }}{{ else }}{{ $labels.instance }}{{ end }} ({{ $labels.instance }}) is down"
+
+  - name: container_down
+    rules:
+      - alert: ContainerDown
+        expr: (time() - container_last_seen{name=~".+", job="integrations/cadvisor"}) > 120
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} on {{ $labels.instance }} hasn't reported for > 2 minutes"

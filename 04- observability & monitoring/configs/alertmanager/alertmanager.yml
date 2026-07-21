@@ -1,0 +1,15 @@
+# Alertmanager routing and receiver configuration
+# All alerts go through a single route to the Discord webhook
+
+route:
+  group_by: ['alertname']       # Group alerts by their alertname label
+  group_wait: 30s               # Wait 30s before sending first notification for a group
+  group_interval: 5m            # Wait 5m before sending new alerts in an existing group
+  repeat_interval: 4h           # Resend resolved alerts every 4h
+  receiver: discord             # Default receiver for all alerts
+
+receivers:
+  - name: discord               # Receiver name referenced by route
+    webhook_configs:
+      - url: http://alertmanager-discord:9094  # alertmanager-discord service on Docker network
+        send_resolved: true     # Send notification when alert recovers

@@ -1,0 +1,8 @@
+# Prometheus PVE-exporter configuration
+# Authenticates to the Proxmox API using a dedicated API token
+# Replace the values below with your own Proxmox API token credentials
+default:
+  user: "CHANGEME_PROXMOX_USER@CHANGEME_REALM"   # e.g. monitoring@pve (Proxmox user in the 'pve' realm)
+  token_name: "CHANGEME_TOKEN_NAME"               # API token name (created in Proxmox UI under user permissions)
+  token_value: "CHANGEME_TOKEN_SECRET"             # API token secret (UUID format)
+  verify_ssl: false                                # Set to true if using a trusted TLS certificate
