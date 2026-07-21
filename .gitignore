@@ -21,9 +21,9 @@
 *.dmg
 *.pkg
 
-# Packer variables
-provisioning/Packer/ISO/variables.pkr.hcl
-provisioning/Packer/Clone/variables.pkr.hcl
+# Packer variables (copy variables.pkr.hcl.example to variables.pkr.hcl)
+02 - provisioning/01 - Packer/ISO/variables.pkr.hcl
+02 - provisioning/01 - Packer/Clone/variables.pkr.hcl
 
 # SSH keys and credentials
 *id_rsa*
@@ -66,6 +66,9 @@ ansible.log
 **/config.json
 **/config.yaml
 **/config.yml
+
+# Ansible vault password (plaintext, must never be committed)
+.vault_pass
 
 # Backup files
 *~

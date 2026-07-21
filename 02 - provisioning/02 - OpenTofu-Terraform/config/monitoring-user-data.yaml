@@ -1,0 +1,27 @@
+#cloud-config
+hostname: "monitore-server-01"
+timezone: Europe/Amsterdam
+users:
+  - default
+  - name: ubuntu
+    groups:
+      - sudo
+      - docker
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ""
+    sudo: ALL=(ALL) NOPASSWD:ALL
+package_update: true
+package_upgrade: true
+packages:
+  - qemu-guest-agent
+  - openssh-server
+  - sudo
+  - curl
+  - jq
+  - vim
+  - net-tools
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - systemctl enable --now ssh
+  - echo "done" > /tmp/cloud-config.done

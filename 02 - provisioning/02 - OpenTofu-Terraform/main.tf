@@ -53,10 +53,16 @@ resource "proxmox_virtual_environment_vm" "minecraft_vm" {
   # }
 
   # Optional disk configuration (using template defaults)
+  # The interface must be the full device name (bus + index), not just the bus type.
+  # Valid options: virtio0, scsi0, ide0, sata0
+  #   - virtio0: Paravirtualized, best KVM performance, low CPU overhead, native Linux support. Preferred.
+  #   - scsi0:  Good performance with virtio-scsi, supports O_DIRECT, more device options (e.g., TRIM).
+  #   - ide0:   Legacy emulation, slow, use only for compatibility (e.g., old OS installers).
+  #   - sata0:  AHCI emulation, good for optical drives, slower than virtio for disks.
   # disk {
   #   aio = "io_uring"       # Asynchronous I/O mode (io_uring for better performance)
   #   file_format = "qcow2"  # Disk format (qcow2)
-  #   interface = "virtio"   # Interface type (virtio for better performance)
+  #   interface = "virtio0"  # Full device name (bus + index), e.g., virtio0, scsi0 — NOT just "virtio"
   #   size = 16              # Disk size in GB (16)
   # }
 
@@ -125,7 +131,7 @@ output "ubuntu_vm_ips" {
 #   value = tls_private_key.ubuntu_vm_key.private_key_openssh  # Returns the generated private key
 # }
 
-# Optional output for SSH public key 
+# Optional output for SSH public key
 # output "ubuntu_vm_public_key" {
 #   value = tls_private_key.ubuntu_vm_key.public_key_openssh   # Returns the generated public key
 # }
