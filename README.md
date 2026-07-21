@@ -29,9 +29,9 @@ devbox run help
 | `devbox run packer:build-clone` | II | Build a VM template from an existing VM |
 | `devbox run tofu:plan` | II | Preview OpenTofu infrastructure changes |
 | `devbox run tofu:apply` | II | Apply OpenTofu infrastructure |
-| `devbox run ansible:setup-monitoring` | VI | Deploy the monitoring stack (set IP in inventory.ini first) |
-| `devbox run ansible:register-vm` | VI | Register a VM with Alloy (`-l IP` to target) |
-| `devbox run ansible:unregister-vm` | VI | Remove Alloy from a VM (`-l IP` to target) |
+| `devbox run ansible:setup-monitoring` | IV | Deploy the monitoring stack (set IP in inventory.ini first) |
+| `devbox run ansible:register-vm` | IV | Register a VM with Alloy (`-l IP` to target) |
+| `devbox run ansible:unregister-vm` | IV | Remove Alloy from a VM (`-l IP` to target) |
 
 Without devbox, run `./setup-env.sh` to install Packer, OpenTofu, and Ansible manually.
 
@@ -65,7 +65,7 @@ proxmox-private-cloud/
 │       ├── main.yaml                      #   Playbook orchestrator
 │       ├── playbooks/                     #   init, users, security, minecraft
 │       └── README.md
-├── 04- observability & monitoring/        # Phase VI — Observability stack
+├── 04- observability & monitoring/        # Phase IV — Observability stack
 │   ├── ansible/                           #   Playbooks for monitoring VM & target VMs
 │   ├── configs/                           #   Grafana, Prometheus, Loki, Alloy configs
 │   ├── terraform/                         #   OpenTofu for the monitoring VM itself
@@ -130,15 +130,7 @@ proxmox-private-cloud/
 
 ---
 
-### Phase IV — *(Reserved / Skipped)*
-
----
-
-### Phase V — *(Reserved / Skipped)*
-
----
-
-### Phase VI — Observability & Monitoring
+### Phase IV — Observability & Monitoring
 
 **Full-stack observability with Grafana, Prometheus, Loki, and Grafana Alloy.**
 
@@ -171,7 +163,7 @@ This project accompanies a multi-part blog series on Medium:
 - [How to Build a Local Private Cloud — Part I: Proxmox](https://medium.com/@0xA1M/how-to-build-a-local-private-cloud-part-i-proxmox-f118b146ebd8)
 - [Phase II — Part 1: Automating VM Provisioning in Proxmox w/ Packer](https://medium.com/@0xA1M/phase-ii-part-1-automating-vm-provisioning-in-proxmox-w-packer-aafdd4231db2)
 - [Phase II — Part 2: Automating VM Provisioning in Proxmox w/ Terraform/OpenTofu](https://medium.com/@0xA1M/phase-ii-part-2-automating-vm-provisioning-in-proxmox-w-terraform-opentofu-ec14ad931bfb)
-- [Phase VI — Your Own Little Palantír w/ LGTM Stack](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
+- [Phase IV — Your Own Little Palantír w/ LGTM Stack](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
 
 ---
 

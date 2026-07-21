@@ -2,7 +2,7 @@
 
 A complete observability stack for monitoring Proxmox VMs with node-level metrics, container metrics, centralized log aggregation, and Discord alerting — deployed entirely via Ansible.
 
-- Corresponding post: [Phase VI — Your Own Little Palantír: Monitoring Your Private Cloud with Grafana Alloy, Prometheus, Loki & Grafana](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
+- Corresponding post: [Phase IV — Your Own Little Palantír w/ LGTM Stack](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
 
 ## Overview
 
@@ -345,7 +345,7 @@ The vault password lives in `ansible/.vault_pass` (gitignored). The template tas
 
 ## References
 
-- [Blog Post: Phase VI — Your Own Little Palantír](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
+- [Blog Post: Phase IV — Your Own Little Palantír w/ LGTM Stack](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
 - [Grafana Alloy Documentation](https://grafana.com/docs/alloy/latest/)
 - [Prometheus Configuration](https://prometheus.io/docs/prometheus/latest/configuration/configuration/)
 - [Loki Configuration](https://grafana.com/docs/loki/latest/configure/)
