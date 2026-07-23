@@ -13,6 +13,10 @@ A single `ansible-playbook` command provisions everything:
 
 Both run as Docker containers on the same VM. The ngrok authtoken is stored encrypted in Ansible Vault and injected at deploy time. If the VM also runs Grafana Alloy from Phase IV, metrics and logs automatically flow to the monitoring stack — no extra config needed.
 
+## Architecture
+
+![Minecraft + ngrok architecture](../.assets/ngrok_mc_tunnel.svg)
+
 ## Prerequisites
 
 1. A VM on your Proxmox host with Docker installed.

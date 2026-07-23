@@ -38,8 +38,8 @@ Without devbox, run `./setup-env.sh` to install Packer, OpenTofu, and Ansible ma
 
 > **Before deploying** — replace all `CHANGEME_*` placeholders across the repo
 > with your actual values (IPs, API tokens, passwords). They appear in:
-> `04- observability & monitoring/configs/`, `04- observability & monitoring/ansible/`,
-> `04- observability & monitoring/terraform/`, `02 - provisioning/02 - OpenTofu-Terraform/variables.tf`,
+> `04 - observability & monitoring/configs/`, `04 - observability & monitoring/ansible/`,
+> `04 - observability & monitoring/terraform/`, `02 - provisioning/02 - OpenTofu-Terraform/variables.tf`,
 > and `devbox.json`.
 
 ---
@@ -66,15 +66,16 @@ proxmox-private-cloud/
 │       ├── main.yaml                      #   Playbook orchestrator
 │       ├── playbooks/                     #   init, users, security, minecraft
 │       └── README.md
-├── 04- observability & monitoring/        # Phase IV — Observability stack
+├── 04 - observability & monitoring/        # Phase IV — Observability stack
 │   ├── ansible/                           #   Playbooks for monitoring VM & target VMs
 │   ├── configs/                           #   Grafana, Prometheus, Loki, Alloy configs
 │   ├── terraform/                         #   OpenTofu for the monitoring VM itself
 │   ├── docker-compose.yml                 #   Monitoring services definition
 │   └── README.md
-├── 05- minecraft/                         # Phase V — Minecraft + ngrok tunnel
+├── 05 - minecraft/                         # Phase V — Minecraft + ngrok tunnel
 ├── .assets/                               # Project diagrams & assets
 │   ├── Architecture.svg
+│   ├── ngrok_mc_tunnel.svg
 │   └── Observation_Architecture.svg
 ├── devbox.json                            # Devbox package & script configuration
 ├── devbox.lock                            # Devbox lockfile
@@ -125,7 +126,7 @@ Modular playbooks handle system init, user management, security hardening, and a
 
 Alloy runs as a unified collector on every target VM (replacing separate Node Exporter, cAdvisor, and Promtail agents). Prometheus handles metrics and alerting, Loki absorbs logs with 30-day retention, and PVE Exporter bridges Proxmox host metrics into the mix. Alertmanager fires notifications to Discord, and Grafana dashboards are auto-provisioned. All secrets are vaulted.
 
-**Directory:** [`04- observability & monitoring/`](./04-%20observability%20&%20monitoring/README.md)
+**Directory:** [`04 - observability & monitoring/`](./04%20-%20observability%20&%20monitoring/README.md)
 
 ---
 
@@ -133,7 +134,7 @@ Alloy runs as a unified collector on every target VM (replacing separate Node Ex
 
 A Minecraft Java Edition server running in Docker with a Paper server type, cracked auth (online_mode=false), and a sidecar ngrok container that punches a public TCP tunnel so anyone can join. The playbook waits for the tunnel to come up and prints the address at the end — no hunting through logs. It lives on the same VM that runs Alloy from Phase IV, so the observability stack picks it up automatically.
 
-**Directory:** [`05- minecraft/`](./05-%20minecraft/)
+**Directory:** [`05 - minecraft/`](./05%20-%20minecraft/README.md)
 
 ---
 
@@ -144,6 +145,7 @@ This project accompanies a multi-part blog series on Medium:
 - [How to Build a Local Private Cloud — Part I: Proxmox](https://medium.com/@0xA1M/how-to-build-a-local-private-cloud-part-i-proxmox-f118b146ebd8)
 - [Phase II — Part 1: Automating VM Provisioning in Proxmox w/ Packer](https://medium.com/@0xA1M/phase-ii-part-1-automating-vm-provisioning-in-proxmox-w-packer-aafdd4231db2)
 - [Phase II — Part 2: Automating VM Provisioning in Proxmox w/ Terraform/OpenTofu](https://medium.com/@0xA1M/phase-ii-part-2-automating-vm-provisioning-in-proxmox-w-terraform-opentofu-ec14ad931bfb)
+- [Phase III — Automating VM Configuration Using Ansible](https://medium.com/@0xA1M/phase-iii-automating-vm-configuration-using-ansible-a51956395590)
 - [Phase IV — Your Own Little Palantír w/ LGTM Stack](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
 - [Phase V — The 2 Week Minecraft Phase](https://medium.com/@0xA1M/phase-v-the-2-week-minecraft-phase-00bf8505cb46)
 
