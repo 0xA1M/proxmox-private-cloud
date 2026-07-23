@@ -83,3 +83,6 @@ ansible.log
 # Configuration files that might contain sensitive data
 *.cfg
 *.conf
+
+# Allow ansible.cfg to be committed
+!ansible.cfg
