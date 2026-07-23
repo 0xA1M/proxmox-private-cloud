@@ -1,0 +1,35 @@
+# Deployed on the target VM via Ansible. Provides a Minecraft server (PAPER)
+# exposed through an ngrok TCP tunnel for external access.
+services:
+  # Minecraft Java Edition server
+  mc:
+    image: itzg/minecraft-server:latest
+    tty: true                            # Allocate a pseudo-TTY for interactive console
+    stdin_open: true                     # Keep stdin open for server console commands
+    ports:
+      - "25565:25565"                    # Expose Minecraft port for local/LAN access
+    environment:
+      EULA: "TRUE"                       # Accept Mojang's EULA (required)
+      TYPE: "PAPER"                      # Server software: Paper (optimized Spigot fork)
+      MEMORY: "1024M"                    # JVM heap size (Xms and Xmx both set to this)
+      MAX_PLAYERS: "5"                   # Maximum concurrent players
+      ONLINE_MODE: "false"               # Disable auth — allows cracked/unauthenticated clients
+      USE_AIKAR_FLAGS: "true"            # Apply Aikar's tuned G1GC JVM flags for performance
+      DIFFICULTY: "3"                    # Hard difficulty (3 = hard, 2 = normal, 1 = easy)
+      ENABLE_ROLLING_LOGS: "true"        # Rotate log files to prevent unbounded disk usage
+      LOG_TIMESTAMP: "true"              # Prepend timestamps to each log line
+    volumes:
+      - "./data:/data"                   # Persistent world data, server properties, mods
+
+  # ngrok TCP tunnel for external access
+  ngrok:
+    container_name: minecraft-ngrok       # Fixed name so Ansible can grep docker logs reliably
+    image: ngrok/ngrok:latest
+    restart: unless-stopped              # Auto-restart on failure or host reboot
+    command:
+      - "start"                          # Start the configured endpoint(s)
+      - "--all"                          # Start all endpoints defined in the config file
+      - "--config"
+      - "/etc/ngrok.yml"                 # Path inside the container (mapped volume below)
+    volumes:
+      - ./configs/ngrok.yml:/etc/ngrok.yml   # Templated config with vault-resolved authtoken

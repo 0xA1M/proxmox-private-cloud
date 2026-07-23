@@ -4,7 +4,7 @@
 
 **Build and operate a local private cloud on Proxmox VE, from bare-metal hypervisor setup to full-stack observability — all automated with Packer, OpenTofu, and Ansible.**
 
-This repository provides a complete, production-oriented workflow: harden a Proxmox host, create standardized VM images via Packer, provision infrastructure with OpenTofu, manage configuration with Ansible, deploy a Minecraft server demo, and monitor everything with a Grafana/Prometheus/Loki/Alloy observability stack. Every phase is documented step by step and pairs with the accompanying Medium blog series.
+This repo walks you through the whole journey: harden a Proxmox host, crank out standardized VM images with Packer, spin them up with OpenTofu, configure everything with Ansible, deploy a Minecraft server with a public ngrok tunnel, and keep an eye on it all with Grafana, Prometheus, Loki, and Alloy. Each phase has a matching Medium blog post if you want the backstory.
 
 ---
 
@@ -29,6 +29,7 @@ devbox run help
 | `devbox run packer:build-clone` | II | Build a VM template from an existing VM |
 | `devbox run tofu:plan` | II | Preview OpenTofu infrastructure changes |
 | `devbox run tofu:apply` | II | Apply OpenTofu infrastructure |
+| `devbox run ansible:deploy-minecraft` | V | Deploy Minecraft server + ngrok tunnel |
 | `devbox run ansible:setup-monitoring` | IV | Deploy the monitoring stack (set IP in inventory.ini first) |
 | `devbox run ansible:register-vm` | IV | Register a VM with Alloy (`-l IP` to target) |
 | `devbox run ansible:unregister-vm` | IV | Remove Alloy from a VM (`-l IP` to target) |
@@ -71,7 +72,7 @@ proxmox-private-cloud/
 │   ├── terraform/                         #   OpenTofu for the monitoring VM itself
 │   ├── docker-compose.yml                 #   Monitoring services definition
 │   └── README.md
-├── 05- minecraft/                         # Minecraft demo (placeholder)
+├── 05- minecraft/                         # Phase V — Minecraft + ngrok tunnel
 ├── .assets/                               # Project diagrams & assets
 │   ├── Architecture.svg
 │   └── Observation_Architecture.svg
@@ -90,10 +91,7 @@ proxmox-private-cloud/
 
 **Production-ready Proxmox foundation.**
 
-- Hardens a fresh Proxmox VE 9.1 installation
-- Configures repositories, firewall, 2FA, and SSH
-- Applies extremeshok's community optimization script
-- Provides post-installation recommendations (timezone, DNS, email notifications)
+Hardens a fresh Proxmox VE 9.1 install — repos, firewall, 2FA, SSH, and extremeshok's optimization script. Also covers post-install niceties like timezone, DNS, and email notifications.
 
 **Directory:** [`01 - core-setup/`](./01%20-%20core-setup/README.md)
 
@@ -101,32 +99,23 @@ proxmox-private-cloud/
 
 ### Phase II — Provisioning (Packer + OpenTofu)
 
-**Automated VM image creation and infrastructure-as-code deployment.**
+**Automated VM image creation and infrastructure-as-code.**
 
-- **Packer** builds standardized VM templates from ISO or existing VMs using cloud-init for unattended installation
-- **OpenTofu** (Terraform-compatible) deploys VMs from those templates with reproducible configuration
-- Both phases use API token authentication and produce ready-to-use VMs with QEMU Guest Agent
+Packer builds standardized VM templates from ISO or existing VMs using cloud-init. OpenTofu (Terraform-compatible) deploys VMs from those templates with reproducible config. Both use API token auth and ship with QEMU Guest Agent.
 
 **Directories:**
 - [`02 - provisioning/01 - Packer/`](./02%20-%20provisioning/01%20-%20Packer/README.md)
 - [`02 - provisioning/02 - OpenTofu-Terraform/`](./02%20-%20provisioning/02%20-%20OpenTofu-Terraform/README.md)
 
-**Key technologies:** Packer, OpenTofu, HCL, cloud-init, Proxmox VE API
-
 ---
 
 ### Phase III — Configuration (Ansible)
 
-**Idempotent configuration management for all provisioned VMs.**
+**Idempotent config management for every VM.**
 
-- Modular playbooks for system init, user management, security hardening, and application deployment
-- Security hardening: SSH key-only auth, fail2ban, UFW firewall with default-deny policy
-- Minecraft server deployment as a Docker container via `itzg/minecraft-server`
-- Ansible Vault integration for secrets management
+Modular playbooks handle system init, user management, security hardening, and app deployment. Security includes SSH key-only auth, fail2ban, and UFW with default-deny. Secrets live in Ansible Vault.
 
 **Directory:** [`03 - configuration/ansible/`](./03%20-%20configuration/ansible/README.md)
-
-**Key technologies:** Ansible, Jinja2, Ansible Vault, Docker
 
 ---
 
@@ -134,23 +123,15 @@ proxmox-private-cloud/
 
 **Full-stack observability with Grafana, Prometheus, Loki, and Grafana Alloy.**
 
-- **Grafana Alloy** as a unified collector (replaces Node Exporter + cAdvisor + Promtail) on every target VM
-- **Prometheus** for metrics storage and alert evaluation with remote write from Alloy agents
-- **Loki** for centralized log aggregation with 30-day retention
-- **PVE Exporter** bridges Proxmox host metrics into Prometheus
-- **Alertmanager + Discord** for instant notifications
-- Auto-provisioned Grafana dashboards (Node Exporter, Docker, Proxmox)
-- All secrets managed via Ansible Vault
+Alloy runs as a unified collector on every target VM (replacing separate Node Exporter, cAdvisor, and Promtail agents). Prometheus handles metrics and alerting, Loki absorbs logs with 30-day retention, and PVE Exporter bridges Proxmox host metrics into the mix. Alertmanager fires notifications to Discord, and Grafana dashboards are auto-provisioned. All secrets are vaulted.
 
 **Directory:** [`04- observability & monitoring/`](./04-%20observability%20&%20monitoring/README.md)
 
-**Key technologies:** Grafana, Prometheus, Loki, Grafana Alloy, Alertmanager, PVE Exporter, Docker Compose, Ansible Vault
-
 ---
 
-### Minecraft Server Demo
+### Phase V — Minecraft Server + ngrok Tunnel
 
-A Minecraft Java Edition server deployed as a Docker container, provisioned through the Phase III Ansible playbooks. The server runs `itzg/minecraft-server` with Paper server type, 2 GB RAM allocation, and exposes port 25565. Configured via Ansible playbooks targeting the `minecraft` host group.
+A Minecraft Java Edition server running in Docker with a Paper server type, cracked auth (online_mode=false), and a sidecar ngrok container that punches a public TCP tunnel so anyone can join. The playbook waits for the tunnel to come up and prints the address at the end — no hunting through logs. It lives on the same VM that runs Alloy from Phase IV, so the observability stack picks it up automatically.
 
 **Directory:** [`05- minecraft/`](./05-%20minecraft/)
 
@@ -164,6 +145,7 @@ This project accompanies a multi-part blog series on Medium:
 - [Phase II — Part 1: Automating VM Provisioning in Proxmox w/ Packer](https://medium.com/@0xA1M/phase-ii-part-1-automating-vm-provisioning-in-proxmox-w-packer-aafdd4231db2)
 - [Phase II — Part 2: Automating VM Provisioning in Proxmox w/ Terraform/OpenTofu](https://medium.com/@0xA1M/phase-ii-part-2-automating-vm-provisioning-in-proxmox-w-terraform-opentofu-ec14ad931bfb)
 - [Phase IV — Your Own Little Palantír w/ LGTM Stack](https://medium.com/@0xA1M/phase-vi-your-own-little-palantir-w-lgtm-stack-fcdeb8a40304)
+- [Phase V — The 2 Week Minecraft Phase](https://medium.com/@0xA1M/phase-v-the-2-week-minecraft-phase-00bf8505cb46)
 
 ---
 

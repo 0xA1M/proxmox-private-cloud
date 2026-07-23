@@ -1,0 +1,4 @@
+# Required collections for the playbook to function.
+collections:
+  - name: community.docker          # Provides docker_compose_v2, docker_container, etc.
+    version: ">=3.0.0"

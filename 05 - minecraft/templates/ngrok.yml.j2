@@ -1,0 +1,16 @@
+# Defines how ngrok connects to the service and which endpoint to expose.
+# The authtoken is injected from Ansible Vault at deploy time.
+version: 3                            # ngrok config file format version
+
+agent:
+  authtoken: "{{ ngrok_auth_token }}" # Injected from Ansible Vault
+  log: stdout                          # Send logs to stdout (captured by docker logs)
+  log_level: "info"                   # Log verbosity: crit, warn, error, info, debug
+  log_format: "logfmt"                # Machine-friendly key=value log format
+  update_check: false                 # Skip update checks in the container
+
+endpoints:
+  - name: Minecraft                   # Endpoint name, used for start/stop by name
+    url: tcp://                       # Use TCP tunnel with a randomly assigned address
+    upstream:
+      url: mc:25565                   # Forward to the mc container on port 25565

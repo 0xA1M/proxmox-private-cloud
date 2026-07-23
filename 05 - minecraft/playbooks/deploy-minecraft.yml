@@ -1,0 +1,67 @@
+# Targets the [minecraft] host group.
+# Copies docker-compose.yml, templates the ngrok config from vault, and runs docker compose.
+# Assumes Docker is already present (Alloy was deployed in Phase IV on this VM).
+---
+- name: Provision minecraft VM
+  hosts: minecraft
+  become: true
+  vars:
+    minecraft_dir: /opt/minecraft        # Base directory on the target VM for all files
+
+  tasks:
+    # Create the top-level directory holding compose file, configs, data, and logs
+    - name: Ensure minecraft directory exists
+      ansible.builtin.file:
+        path: "{{ minecraft_dir }}"
+        state: directory
+        mode: '0755'
+
+    # Copy the Docker Compose file that defines both the mc and ngrok services
+    - name: Copy docker-compose.yml
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../docker-compose.yml"
+        dest: "{{ minecraft_dir }}/docker-compose.yml"
+        mode: '0644'
+
+    # Create subdirectories for ngrok config, ngrok logs, and world data
+    - name: Create required directories
+      ansible.builtin.file:
+        path: "{{ minecraft_dir }}/{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - configs                       # Holds ngrok.yml (templated next)
+        - data                          # Minecraft world data (server.properties, worlds, mods)
+
+    # Deploy the ngrok config with the vault-resolved authtoken
+    - name: Template ngrok.yml from vault
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/ngrok.yml.j2"
+        dest: "{{ minecraft_dir }}/configs/ngrok.yml"
+        mode: '0644'
+      no_log: true                       # Prevent the vault secret from appearing in Ansible output
+
+    # Start (or refresh) the Minecraft + ngrok containers via Docker Compose
+    # pull: always ensures the latest images are fetched on each run
+    # remove_orphans: true cleans up containers not defined in the current compose file
+    - name: Deploy minecraft server + ngrok with docker compose
+      community.docker.docker_compose_v2:
+        project_src: "{{ minecraft_dir }}"
+        state: present
+        pull: always
+        remove_orphans: true
+
+    # Poll docker logs until ngrok connects and prints the tunnel URL
+    # grep extracts everything after "url=" (e.g. tcp://5.tcp.eu.ngrok.io:21903)
+    - name: Wait for Ngrok tunnel and get public URL
+      ansible.builtin.shell: |
+        docker logs minecraft-ngrok 2> /dev/null | grep -oP 'url=\K\S+' | tail -1
+      register: ngrok_tunnel
+      changed_when: false
+      until: ngrok_tunnel.stdout != ""   # Keep polling until URL appears
+      retries: 15                         # Max 15 attempts
+      delay: 2                            # 2 seconds between each attempt (~30s total)
+
+    - name: Show Minecraft server address
+      ansible.builtin.debug:
+        msg: "Minecraft server accessible at {{ ngrok_tunnel.stdout }}"

@@ -14,6 +14,7 @@
     "scripts": {
       "help": [
         "echo 'Available commands:'",
+        "echo '  ansible:deploy-minecraft   Deploy Minecraft server + ngrok tunnel'",
         "echo '  ansible:setup-monitoring  Deploy monitoring stack (limit with -l IP)'",
         "echo '  ansible:register-vm       Register a VM with alloy (limit with -l IP)'",
         "echo '  ansible:unregister-vm     Remove alloy from a VM (limit with -l IP)'",
@@ -21,6 +22,9 @@
         "echo '  packer:build-iso          Build VM from ISO'",
         "echo '  tofu:plan                 Preview infrastructure changes'",
         "echo '  tofu:apply                Apply infrastructure changes'"
+      ],
+      "ansible:deploy-minecraft": [
+        "ansible-playbook -i \"05 - minecraft/inventory.ini\" \"05 - minecraft/playbooks/deploy-minecraft.yml\""
       ],
       "ansible:setup-monitoring": [
         "ansible-playbook -i \"04- observability & monitoring/ansible/inventory.ini\" -l CHANGEME_MONITORING_VM_IP \"04- observability & monitoring/ansible/playbooks/setup-monitoring-vm.yaml\""
